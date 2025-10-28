@@ -26,6 +26,10 @@ WORKDIR /var/www/html
 # ຕັ້ງຄ່າ nginx (ທ່ານຈະຕ້ອງສ້າງໄຟລ໌ nginx.conf ດ້ວຍຕົນເອງ)
 COPY . /var/www/html
 
+# 3. **************** RUN COMPOSER INSTALL *****************
+# ນີ້ແມ່ນສິ່ງທີ່ສ້າງ vendor/autoload.php
+RUN composer install --no-dev --optimize-autoloader
+
 # ຕັ້ງຄ່າ Permission ໃຫ້ກັບ Storage (ສຳຄັນສຳລັບ Laravel)
 RUN chown -R www-data:www-data /var/www/html/storage
 
