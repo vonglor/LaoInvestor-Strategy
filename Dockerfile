@@ -30,7 +30,7 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 
 RUN chmod -R 775 storage bootstrap/cache
 
-ENV PORT=8080
-EXPOSE 8080
+ENV PORT=10000
+EXPOSE 10000
 
 CMD php artisan serve --host=0.0.0.0 --port=$PORT
