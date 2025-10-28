@@ -1,11 +1,9 @@
-# ໃຊ້ PHP Image ຈາກ Docker Hub
-FROM php:8.2-fpm-alpine
+# 1. Base Image: ໃຊ້ PHP Image ທີ່ຖືກຕ້ອງ
+FROM php:8.4-fpm-alpine
 
-# ຕິດຕັ້ງເຄື່ອງມື ແລະ Extensions ທີ່ຈຳເປັນສຳລັບ Laravel
+# 2. ຕິດຕັ້ງ PHP Extensions ແລະເຄື່ອງມືທີ່ຈຳເປັນສຳລັບ Laravel
+# (pdo_mysql/zip ແມ່ນສຳຄັນ)
 RUN apk update && apk add \
-    nginx \
-    supervisor \
-    mysql-client \
     git \
     curl \
     unzip \
@@ -13,31 +11,23 @@ RUN apk update && apk add \
     libpng-dev \
     libxml2-dev \
     # ຕິດຕັ້ງ PHP Extensions
-    && docker-php-ext-install pdo_mysql zip pcntl opcache \
-    # ຕັ້ງຄ່າ Supervisor ສຳລັບການ Process Management
-    && mkdir -p /etc/supervisord.d /run/nginx
+    && docker-php-ext-install pdo_mysql zip opcache
 
-# ຕິດຕັ້ງ Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# ຕັ້ງຄ່າ Environment
+# 3. ຕັ້ງຄ່າ Working Directory (ໂຟລເດີຫຼັກຂອງ Laravel)
 WORKDIR /var/www/html
 
-# ຕັ້ງຄ່າ nginx (ທ່ານຈະຕ້ອງສ້າງໄຟລ໌ nginx.conf ດ້ວຍຕົນເອງ)
-COPY . /var/www/html
-
-# 3. **************** RUN COMPOSER INSTALL *****************
-# ນີ້ແມ່ນສິ່ງທີ່ສ້າງ vendor/autoload.php
+# 4. ຕິດຕັ້ງ Composer (ສຳຄັນທີ່ສຸດ: ສ້າງ vendor/)
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY . .
 RUN composer install --no-dev --optimize-autoloader
 
-# ຕັ້ງຄ່າ Permission ໃຫ້ກັບ Storage (ສຳຄັນສຳລັບ Laravel)
-RUN chown -R www-data:www-data /var/www/html/storage
+# 5. ຕັ້ງຄ່າ Permission (ສຳຄັນສຳລັບ Cache/Logs)
+# ຕ້ອງໃຫ້ user ຂອງ server (www-data) ສາມາດຂຽນໄຟລ໌ໄດ້
+RUN chown -R www-data:www-data storage bootstrap/cache
 
-# ເປີດ Port ທີ່ຈຳເປັນ
+# 6. ເປີດ Port
 EXPOSE 8080
 
-# ຕັ້ງຄ່າ Start Command (Nginx ຈະເປີດໃນພື້ນຫຼັງ)
-# ທ່ານສາມາດໃຊ້ Supervisor ເພື່ອ run Nginx ແລະ PHP-FPM ພ້ອມກັນ
-# CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
-
+# 7. Start Command ທີ່ຖືກແກ້ໄຂແລ້ວ
+# ໃຊ້ PHP Artisan Serve ມາດຕະຖານ
 CMD ["php", "artisan", "serve", "--host", "0.0.0.0", "--port", "8080"]
