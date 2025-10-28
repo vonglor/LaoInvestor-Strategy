@@ -34,4 +34,6 @@ EXPOSE 8080
 
 # ຕັ້ງຄ່າ Start Command (Nginx ຈະເປີດໃນພື້ນຫຼັງ)
 # ທ່ານສາມາດໃຊ້ Supervisor ເພື່ອ run Nginx ແລະ PHP-FPM ພ້ອມກັນ
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+# CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+
+CMD ["php", "artisan", "serve", "--host", "0.0.0.0", "--port", "8080"]
