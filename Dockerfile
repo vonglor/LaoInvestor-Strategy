@@ -1,27 +1,35 @@
-FROM php:8.1-fpm
+# 1. Base Image: ໃຊ້ PHP 8.4
+FROM php:8.4-fpm-alpine
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    git curl libpq-dev zip unzip \
-    && docker-php-ext-install pdo pdo_pgsql
+# 2. ຕິດຕັ້ງ PHP Extensions ແລະເຄື່ອງມືທີ່ຈຳເປັນສຳລັບ Laravel
+RUN apk update && apk add \
+    git \
+    curl \
+    unzip \
+    libzip-dev \
+    libpng-dev \
+    libxml2-dev \
+    # ຕິດຕັ້ງ PHP Extensions
+    && docker-php-ext-install pdo_mysql zip opcache
 
-# Install composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
+# 3. ຕັ້ງຄ່າ Working Directory (ໂຟລເດີຫຼັກຂອງ Laravel)
 WORKDIR /var/www/html
 
+# 4. ຕິດຕັ້ງ Composer (ສ້າງ vendor/autoload.php)
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY composer.json composer.lock ./
 COPY . .
+RUN composer install --no-dev --optimize-autoloader
 
-RUN composer install --optimize-autoloader --no-dev
+# 5. ຕັ້ງຄ່າ Permission (ສຳຄັນສຳລັບ Cache/Logs)
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+
+# Fix Composer memory limit
+ENV COMPOSER_MEMORY_LIMIT=-1
 
 RUN chmod -R 775 storage bootstrap/cache
 
-# Generate optimized Laravel cache
-RUN php artisan config:clear \
-    && php artisan route:clear \
-    && php artisan view:clear
-
-# Render uses PORT env
 ENV PORT=8080
 EXPOSE 8080
 
